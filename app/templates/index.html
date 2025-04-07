@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance & Contacts</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-4">
+    <h1 class="mb-4">Compliance & Contacts Dashboard</h1>
+
+    <!-- Upload Form -->
+    <form action="{{ url_for('main.upload_files') }}" method="POST" enctype="multipart/form-data" class="mb-4">
+        <div class="row g-3">
+            <div class="col-md-5">
+                <label for="excel_file" class="form-label">Upload Compliance File:</label>
+                <input type="file" name="excel_file" id="excel_file" class="form-control" required>
+                <small id="excel_file_name" class="text-muted">
+                    {% if session.get('excel_filename') %}Uploaded: {{ session['excel_filename'] }}{% endif %}
+                </small>
+            </div>
+            <div class="col-md-5">
+                <label for="contacts_file" class="form-label">Upload Contacts File:</label>
+                <input type="file" name="contacts_file" id="contacts_file" class="form-control" required>
+                <small id="contacts_file_name" class="text-muted">
+                    {% if session.get('contacts_filename') %}Uploaded: {{ session['contacts_filename'] }}{% endif %}
+                </small>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-success w-100">Upload</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Filters Form -->
+    <form action="{{ url_for('main.index') }}" method="POST" class="mb-4">
+        <input type="hidden" name="filter_type" value="compliance">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="filter_Country" class="form-label">Filter by Country (Compliance Sheet):</label>
+                <select name="filter_Country_compliance" class="form-select" required>
+                    <option value="">Select Country</option>
+                    {% for country in unique_values.get("Country", []) %}
+                    <option value="{{ country }}" {% if filter_values.get("Country")==country %}selected{% endif %}>{{ country }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="filter_Month" class="form-label">Filter by Month:</label>
+                <select name="filter_Month_compliance" class="form-select">
+                    <option value="">All</option>
+                    {% for month in unique_values.get("Month", []) %}
+                    <option value="{{ month }}" {% if filter_values.get("Month")==month %}selected{% endif %}>{{ month }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-12 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Compliance Data Table -->
+    <h2>Compliance Data</h2>
+    {% if excel_data %}
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    {% for column in excel_columns %}
+                    <th>{{ column }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in excel_data %}
+                <tr>
+                    {% for column in excel_columns %}
+                    <td>{{ row[column] }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No compliance data available.</p>
+    {% endif %}
+
+    <hr>
+
+    <!-- Contacts Data Table -->
+    <h2>Contacts Data</h2>
+    {% if contacts_data %}
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    {% for column in contacts_columns %}
+                    <th>
+                        {{ column }}
+                        {% if column == "Country" %}
+                        <form action="{{ url_for('main.index') }}" method="POST">
+                            <input type="hidden" name="filter_type" value="contacts">
+                            <select name="filter_Country_contacts" class="form-select d-inline w-auto" onchange="this.form.submit()">
+                                <option value="">All</option>
+                                {% for country in unique_values.get("Country", []) %}
+                                <option value="{{ country }}" {% if filter_values.get("Contacts_Country")==country %}selected{% endif %}>{{ country }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        {% endif %}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in contacts_data %}
+                <tr>
+                    {% for column in contacts_columns %}
+                    <td>{{ row[column] }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No contacts data available.</p>
+    {% endif %}
+
+    <hr>
+
+    <!-- Generate Email Button -->
+    <form action="{{ url_for('main.generate_email') }}" method="POST">
+        <button type="submit" class="btn btn-warning w-100">Generate Email Drafts</button>
+    </form>
+</body>
+</html>
